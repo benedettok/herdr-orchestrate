@@ -300,7 +300,7 @@ async function spawnWorker(input) {
 		const rootPaneId = tabResult.result?.root_pane?.pane_id;
 		worker.tabId = typeof tabResult.result?.tab?.tab_id === "string" ? tabResult.result.tab.tab_id : null;
 		if (typeof rootPaneId !== "string") throw new Error(`Herdr did not return a root pane for worker '${input.id}'.`);
-		const command = `cd ${JSON.stringify(worktreePath)} && exec pi --name ${JSON.stringify(agentName)} --provider ${JSON.stringify(model.provider)} --model ${JSON.stringify(model.model)} --thinking ${JSON.stringify(model.thinking)}`;
+		const command = `cd ${JSON.stringify(worktreePath)} && exec claude --name ${JSON.stringify(agentName)} --model ${JSON.stringify(model.model)} --effort ${JSON.stringify(model.thinking)} --permission-mode auto`;
 		worker.paneId = rootPaneId;
 		await run("herdr", [
 			"pane",
@@ -441,39 +441,21 @@ async function deliver(paneId, promptPath) {
 	}
 }
 async function doctor(cwd) {
+	const models = [...new Set(Object.values(MODEL_ROUTES).map((route) => route.model))];
 	const checks = [
-		["git", ["--version"]],
-		["herdr", ["--version"]],
-		["pi", [
-			"--provider",
-			"anthropic",
-			"--model",
-			"claude-opus-5-5",
-			"--thinking",
-			"medium",
-			"--no-tools",
-			"--no-session",
-			"--print",
-			"ok"
-		]],
-		["pi", [
-			"--provider",
-			"anthropic",
-			"--model",
-			"claude-haiku-4-5",
-			"--thinking",
-			"high",
-			"--no-tools",
-			"--no-session",
-			"--print",
-			"ok"
-		]]
+		["git", "git", ["--version"]],
+		["herdr", "herdr", ["--version"]],
+		...models.map((model) => [
+			`claude ${model}`,
+			"claude",
+			["--print", "ok", "--model", model, "--effort", "low", "--no-session-persistence"]
+		])
 	];
 	await repositoryRoot(cwd);
 	const outcomes = [];
-	for (const [command, args] of checks) {
+	for (const [label, command, args] of checks) {
 		await run(command, args, cwd);
-		outcomes.push(`${command}: ok`);
+		outcomes.push(`${label}: ok`);
 	}
 	return outcomes;
 }

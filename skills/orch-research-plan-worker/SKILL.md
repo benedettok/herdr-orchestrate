@@ -1,8 +1,8 @@
 ---
 name: orch-research-plan-worker
-description: Research and plan assigned work when a prompt identifies this Pi session as an orch exploration or research/plan worker. Handles evidence gathering, repository mapping, options, risks, and implementation briefs; exploration workers never edit or decide.
+description: Research and plan assigned work when a prompt identifies this Claude Code session as an orch exploration or research/plan worker. Handles evidence gathering, repository mapping, options, risks, and implementation briefs; exploration workers never edit or decide.
 license: MIT
-compatibility: Requires Pi inside a herdr-orchestrate worker pane.
+compatibility: Requires Claude Code inside a herdr-orchestrate worker pane.
 ---
 
 # Orch research and planning worker

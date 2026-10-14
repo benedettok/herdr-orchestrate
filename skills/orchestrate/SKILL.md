@@ -1,14 +1,14 @@
 ---
 name: orchestrate
-description: Run a user-directed task through visible Pi workers with herdr-orchestrate.
+description: Run a user-directed task through visible Claude Code workers with herdr-orchestrate.
 disable-model-invocation: true
 license: MIT
-compatibility: Requires Pi inside Herdr, Node.js, Git, the linked herdr-orchestrate plugin, and gh for PR operations.
+compatibility: Requires Claude Code inside Herdr, Node.js, Git, the linked herdr-orchestrate plugin, and gh for PR operations.
 ---
 
 # Orchestrate
 
-This current user-facing Pi session is the **god session**. Keep decisions and user communication here; delegate repository investigation and delivery to visible Pi workers. Never spawn a god worker.
+This current user-facing Claude Code session is the **god session**. Keep decisions and user communication here; delegate repository investigation and delivery to visible Claude Code workers. Never spawn a god worker.
 
 ## Hard boundary
 
@@ -58,7 +58,7 @@ Review and proof workers must use `--base <implementation-sha>` so they inspect 
 
 Prefer a **fan-out/fan-in** gate over assigning one broad task to one worker. Before spawning, split the gate by independent system, issue, user path, or evidence source; run those workers in parallel, then synthesize their durable reports before the next gate. Keep each brief bounded enough that one worker can produce deep evidence for one concern. Use a single broad worker only when the work is inherently coupled, splitting would duplicate most investigation, or concurrent writers would overlap. Parallel implementation requires disjoint ownership; read-only research, review, and proof should be parallelized whenever their scopes can be separated.
 
-Immediately run `wait --run <id>` through Pi's `bg_command` tool. Never foreground the wait and never use shell `&`: the background tool is what wakes the god session when workers settle.
+Immediately run `wait --run <id>` through the Bash tool with `run_in_background: true`. Never foreground the wait and never use shell `&`: the background tool is what wakes the god session when workers settle.
 
 If a Sonnet report ends `orch-verdict: blocked scout evidence needed`, spawn the requested Haiku scouts, wait for their fact-only reports, then send the report paths back to the same Sonnet worker.
 
