@@ -174,8 +174,8 @@ async function startRun(input) {
 				state.boardPaneId = boardPane.pane_id;
 				await saveRun(state);
 				await run("herdr", [
-					"wait",
-					"output",
+					"pane",
+					"wait-output",
 					boardPane.pane_id,
 					"--match",
 					state.id,
@@ -222,8 +222,8 @@ async function startRun(input) {
 		boardCommand
 	]);
 	await run("herdr", [
-		"wait",
-		"output",
+		"pane",
+		"wait-output",
 		rootPaneId,
 		"--match",
 		"# orch board",
@@ -308,15 +308,7 @@ async function spawnWorker(input) {
 			rootPaneId,
 			command
 		]);
-		await run("herdr", [
-			"wait",
-			"agent-status",
-			rootPaneId,
-			"--status",
-			"idle",
-			"--timeout",
-			"30000"
-		]);
+		await waitForAgent(rootPaneId, "idle", 30000);
 		await deliver(rootPaneId, promptPath);
 		worker.status = "working";
 		worker.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
@@ -374,18 +366,31 @@ async function sendWorker(input) {
 function workerPrompt(prompt, reportPath) {
 	return `${prompt.trim()}\n\n## orch completion\nWrite your report to ${reportPath}. End it with: \`orch-verdict: done\` or \`orch-verdict: blocked <reason>\`.\n`;
 }
+async function waitForAgent(paneId, status, timeoutMs) {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		const remaining = deadline - Date.now();
+		try {
+			await run("herdr", [
+				"agent",
+				"wait",
+				paneId,
+				"--until",
+				status,
+				"--timeout",
+				String(Math.max(remaining, 1))
+			]);
+			return;
+		} catch (error) {
+			if (remaining <= 0 || !String(error).includes("agent_not_found")) throw error;
+			await new Promise((resolve) => setTimeout(resolve, 500));
+		}
+	}
+}
 async function deliver(paneId, promptPath) {
 	const text = await readFile(promptPath, "utf8");
 	try {
-		await run("herdr", [
-			"wait",
-			"agent-status",
-			paneId,
-			"--status",
-			"idle",
-			"--timeout",
-			"10000"
-		]);
+		await waitForAgent(paneId, "idle", 10000);
 	} catch {}
 	await run("herdr", [
 		"pane",
@@ -400,15 +405,7 @@ async function deliver(paneId, promptPath) {
 		"Enter"
 	]);
 	try {
-		await run("herdr", [
-			"wait",
-			"agent-status",
-			paneId,
-			"--status",
-			"working",
-			"--timeout",
-			"10000"
-		]);
+		await waitForAgent(paneId, "working", 10000);
 	} catch {
 		await run("herdr", [
 			"pane",
@@ -429,15 +426,7 @@ async function deliver(paneId, promptPath) {
 			paneId,
 			"Enter"
 		]);
-		await run("herdr", [
-			"wait",
-			"agent-status",
-			paneId,
-			"--status",
-			"working",
-			"--timeout",
-			"10000"
-		]);
+		await waitForAgent(paneId, "working", 10000);
 	}
 }
 async function doctor(cwd) {
