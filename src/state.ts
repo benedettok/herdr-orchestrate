@@ -23,22 +23,22 @@ export function isThinkingLevel(value: unknown): value is ThinkingLevel {
 
 export const MODEL_ROUTES: Record<Route, ModelRoute> = {
   default: {
-    provider: "openai-codex",
-    model: "gpt-5.6-sol",
+    provider: "anthropic",
+    model: "claude-opus-5-5",
     thinking: "medium",
     writesSource: true,
     decides: true,
   },
   fast: {
-    provider: "openai-codex",
-    model: "gpt-5.6-luna",
+    provider: "anthropic",
+    model: "claude-sonnet-5-5",
     thinking: "medium",
     writesSource: true,
     decides: true,
   },
   explore: {
-    provider: "opencode-go",
-    model: "deepseek-v4-flash",
+    provider: "anthropic",
+    model: "claude-haiku-4-5",
     thinking: "high",
     writesSource: false,
     decides: false,

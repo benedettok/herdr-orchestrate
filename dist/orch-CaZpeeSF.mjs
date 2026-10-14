@@ -52,22 +52,22 @@ function isThinkingLevel(value) {
 }
 const MODEL_ROUTES = {
 	default: {
-		provider: "openai-codex",
-		model: "gpt-5.6-sol",
+		provider: "anthropic",
+		model: "claude-opus-5-5",
 		thinking: "medium",
 		writesSource: true,
 		decides: true
 	},
 	fast: {
-		provider: "openai-codex",
-		model: "gpt-5.6-luna",
+		provider: "anthropic",
+		model: "claude-sonnet-5-5",
 		thinking: "medium",
 		writesSource: true,
 		decides: true
 	},
 	explore: {
-		provider: "opencode-go",
-		model: "deepseek-v4-flash",
+		provider: "anthropic",
+		model: "claude-haiku-4-5",
 		thinking: "high",
 		writesSource: false,
 		decides: false
@@ -446,9 +446,9 @@ async function doctor(cwd) {
 		["herdr", ["--version"]],
 		["pi", [
 			"--provider",
-			"openai-codex",
+			"anthropic",
 			"--model",
-			"gpt-5.6-sol",
+			"claude-opus-5-5",
 			"--thinking",
 			"medium",
 			"--no-tools",
@@ -458,9 +458,9 @@ async function doctor(cwd) {
 		]],
 		["pi", [
 			"--provider",
-			"opencode-go",
+			"anthropic",
 			"--model",
-			"deepseek-v4-flash",
+			"claude-haiku-4-5",
 			"--thinking",
 			"high",
 			"--no-tools",

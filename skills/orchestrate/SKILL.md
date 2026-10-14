@@ -35,12 +35,12 @@ Based on user intent and evidence, omit, repeat, or parallelize stages as approp
 
 Read [`references/routing.md`](references/routing.md) before spawning workers. Use its **scout → analyst → author → reviewer** pipeline:
 
-- DeepSeek `explore` workers are scouts: they map relevant files and evidence only.
-- GPT-5.6 Luna `fast` workers are the default analysts, authors, and proof workers.
-- GPT-5.6 Sol `default` workers handle consequential decisions and quality-critical review.
+- Haiku `explore` workers are scouts: they map relevant files and evidence only.
+- Claude Sonnet 5.5 `fast` workers are the default analysts, authors, and proof workers.
+- Claude Opus 5.5 `default` workers handle consequential decisions and quality-critical review.
 - `medium` is the recommended thinking level for both coding routes. Use `high` only after an evidence-backed medium escalation or an explicit user request, and write the reason in the brief.
 
-Workers never spawn nested workers. A Luna worker that needs broad file discovery returns the routing reference's `Scout request`; the god session spawns DeepSeek scouts and sends their report paths back to Luna.
+Workers never spawn nested workers. A Sonnet worker that needs broad file discovery returns the routing reference's `Scout request`; the god session spawns Haiku scouts and sends their report paths back to Sonnet.
 
 Start one run with `run start`, retain its run ID, and use that ID explicitly thereafter. The CLI reuses the project's persistent orchestration workspace and board. This step is complete when `board --run <id>` shows the intended goal, size, and no unintended workers.
 
@@ -60,7 +60,7 @@ Prefer a **fan-out/fan-in** gate over assigning one broad task to one worker. Be
 
 Immediately run `wait --run <id>` through Pi's `bg_command` tool. Never foreground the wait and never use shell `&`: the background tool is what wakes the god session when workers settle.
 
-If a Luna report ends `orch-verdict: blocked scout evidence needed`, spawn the requested DeepSeek scouts, wait for their fact-only reports, then send the report paths back to the same Luna worker.
+If a Sonnet report ends `orch-verdict: blocked scout evidence needed`, spawn the requested Haiku scouts, wait for their fact-only reports, then send the report paths back to the same Sonnet worker.
 
 This step is complete when the board reports the worker settled and its durable report ends in `orch-verdict: done` or identifies a precise blocker.
 

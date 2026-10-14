@@ -300,9 +300,9 @@ export async function doctor(cwd: string): Promise<string[]> {
       "pi",
       [
         "--provider",
-        "openai-codex",
+        "anthropic",
         "--model",
-        "gpt-5.6-sol",
+        "claude-opus-5-5",
         "--thinking",
         "medium",
         "--no-tools",
@@ -315,9 +315,9 @@ export async function doctor(cwd: string): Promise<string[]> {
       "pi",
       [
         "--provider",
-        "opencode-go",
+        "anthropic",
         "--model",
-        "deepseek-v4-flash",
+        "claude-haiku-4-5",
         "--thinking",
         "high",
         "--no-tools",
