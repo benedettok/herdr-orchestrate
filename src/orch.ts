@@ -128,7 +128,8 @@ export async function spawnWorker(input: {
   const baseRef = input.baseRef ?? state.baseRef;
   const branch = model.writesSource ? `orch/${state.id}/${input.id}` : null;
   await mkdir(reportDirectory, { recursive: true });
-  await writeFile(promptPath, workerPrompt(input.prompt, reportPath));
+  const brief = await readFile(resolve(input.prompt), "utf8");
+  await writeFile(promptPath, workerPrompt(brief, reportPath));
   if (branch) {
     await run("git", ["worktree", "add", "-b", branch, worktreePath, baseRef], state.repoRoot);
   } else {
@@ -177,7 +178,7 @@ export async function spawnWorker(input: {
       typeof tabResult.result?.tab?.tab_id === "string" ? tabResult.result.tab.tab_id : null;
     if (typeof rootPaneId !== "string")
       throw new Error(`Herdr did not return a root pane for worker '${input.id}'.`);
-    const command = `cd ${JSON.stringify(worktreePath)} && exec claude --name ${JSON.stringify(agentName)} --model ${JSON.stringify(model.model)} --effort ${JSON.stringify(model.thinking)} --permission-mode auto`;
+    const command = `cd ${JSON.stringify(worktreePath)} && exec claude --name ${JSON.stringify(agentName)} --model ${JSON.stringify(model.model)} --effort ${JSON.stringify(model.thinking)} --permission-mode auto --add-dir ${JSON.stringify(reportDirectory)} --allowedTools ${JSON.stringify(`Edit(/${reportDirectory}/**)`)}`;
     worker.paneId = rootPaneId;
     await run("herdr", ["pane", "run", rootPaneId, command]);
     await waitForAgent(rootPaneId, "idle", 30000);
