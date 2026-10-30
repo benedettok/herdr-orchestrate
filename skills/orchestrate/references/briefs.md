@@ -5,7 +5,7 @@ Replace every `<placeholder>`. Keep one role per worker.
 ## Explore — facts only
 
 ```md
-You are an orch EXPLORE worker on the explore route. Use the orch-research-plan-worker skill.
+You are an orch EXPLORE (scout) worker on the default route. Use the orch-research-plan-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
 
 Question: <bounded factual question>
 Scope: <directories, symbols, or evidence sources>
@@ -16,7 +16,7 @@ Deliver: every requested scope mapped to relevant files and symbols; caller/impo
 ## Research and plan
 
 ```md
-You are an orch RESEARCH/PLAN worker on the <default|fast> route. Use the orch-research-plan-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
+You are an orch RESEARCH/PLAN worker on the default route. Use the orch-research-plan-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
 
 Goal: <user outcome>
 Scope: <areas to investigate>
@@ -29,7 +29,7 @@ Deliver: evidence-backed recommendation, implementation slices, risks, exact acc
 ## Implement or fix
 
 ```md
-You are an orch AUTHOR worker on the <default|fast> route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
+You are an orch AUTHOR worker on the default route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
 
 Goal: <bounded deliverable>
 Base: <ref or SHA>
@@ -48,7 +48,7 @@ For a fix pass, name the review report and enumerate the accepted findings. Send
 ## Review
 
 ```md
-You are an orch REVIEW-ONLY worker on the <default|fast> route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
+You are an orch REVIEW-ONLY worker on the default route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
 
 Target: <implementation SHA>
 Base: <comparison base SHA>
@@ -77,7 +77,7 @@ Spawn with `--base <PR head SHA>`, in parallel with the first internal review.
 ## Proof
 
 ```md
-You are an orch PROOF worker on the <default|fast> route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
+You are an orch PROOF worker on the default route. Use the orch-implementation-worker skill. The orchestrator selected the route and thinking level before spawn; do not choose or change them after launch.
 
 Target: <approved implementation SHA>
 User path: <exact behavior to exercise>

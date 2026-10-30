@@ -35,12 +35,11 @@ Based on user intent and evidence, omit, repeat, or parallelize stages as approp
 
 Read [`references/routing.md`](references/routing.md) before spawning workers. Use its **scout → analyst → author → reviewer** pipeline:
 
-- Haiku `explore` workers are scouts: they map relevant files and evidence only.
-- Claude Sonnet 5.5 `fast` workers are the default analysts, authors, and proof workers.
-- Claude Opus 5.5 `default` workers handle consequential decisions and quality-critical review.
-- `medium` is the recommended thinking level for both coding routes. Use `high` only after an evidence-backed medium escalation or an explicit user request, and write the reason in the brief.
+- Every worker runs on Claude Opus 5.5: `--route default` with an explicit `--thinking` of at least `low`. Do not use the `fast` (Sonnet) or `explore` (Haiku) routes.
+- Scouts map relevant files and evidence only, with `low` thinking.
+- Analysts, authors, proof workers and reviewers use `medium`. Use `high` only after an evidence-backed medium escalation, for a design question with several viable shapes, or on an explicit user request, and write the reason in the brief.
 
-Workers never spawn nested workers. A Sonnet worker that needs broad file discovery returns the routing reference's `Scout request`; the god session spawns Haiku scouts and sends their report paths back to Sonnet.
+Workers never spawn nested workers. A worker that needs broad file discovery returns the routing reference's `Scout request`; the god session spawns scouts and sends their report paths back to that worker.
 
 Start one run with `run start`, retain its run ID, and use that ID explicitly thereafter. The CLI reuses the project's persistent orchestration workspace and board. This step is complete when `board --run <id>` shows the intended goal, size, and no unintended workers.
 
@@ -51,7 +50,7 @@ Read [`references/briefs.md`](references/briefs.md) when drafting any worker bri
 Spawn with:
 
 ```text
-worker spawn <id> --route <default|fast|explore> --prompt <file> --run <run-id> [--thinking <low|medium|high|xhigh>] [--base <ref-or-sha>]
+worker spawn <id> --route default --prompt <file> --run <run-id> --thinking <low|medium|high|xhigh> [--base <ref-or-sha>]
 ```
 
 Review and proof workers must use `--base <implementation-sha>` so they inspect the delivered code, not the run's original base.
@@ -60,7 +59,7 @@ Prefer a **fan-out/fan-in** gate over assigning one broad task to one worker. Be
 
 Immediately run `wait --run <id>` through the Bash tool with `run_in_background: true`. Never foreground the wait and never use shell `&`: the background tool is what wakes the god session when workers settle.
 
-If a Sonnet report ends `orch-verdict: blocked scout evidence needed`, spawn the requested Haiku scouts, wait for their fact-only reports, then send the report paths back to the same Sonnet worker.
+If a report ends `orch-verdict: blocked scout evidence needed`, spawn the requested scouts, wait for their fact-only reports, then send the report paths back to the same worker.
 
 This step is complete when the board reports the worker settled and its durable report ends in `orch-verdict: done` or identifies a precise blocker.
 
