@@ -38,6 +38,7 @@ Acceptance criteria:
 
 - <criterion>
   Constraints: <repository and user constraints>
+  Design: before adding a module, look for an existing one to extend or a shared seam to put both behind; never import another area's internals, move shared code to a neutral module instead; before interpreting a tool's configuration in code, check whether the tool can do it natively.
   Validation: <required checks and real-path proof expectations>
   Git: commit the coherent result; push/open a PR only if requested. Never merge.
 ```
@@ -57,6 +58,21 @@ Review correctness, regressions, security, maintainability, requirement coverage
 ```
 
 Spawn with `--base <implementation SHA>` so the worktree contains the target code.
+
+## Architecture review
+
+```md
+You are an orch EXPLORATION worker on the default route acting as an architecture reviewer. Use the orch-research-plan-worker skill. You never edit, commit, push or comment.
+
+Target: <PR head SHA> (PR <url>)
+Base: <comparison base SHA>
+Scope: the diff and the code it reuses, duplicates or reaches into: <areas>. Other open PRs touching the same code: <PR numbers and branches, or none>.
+Method: if the repository has `.claude/skills/improve-codebase-architecture/`, follow its steps 1 and 2 (read `SKILL.md`, `LANGUAGE.md`, `HTML-REPORT.md`), scoped to this diff; write the HTML report to `/tmp/architecture-review-<pr>-<timestamp>.html` and do not open it. Otherwise apply the same tests directly: deletion test per new module, one adapter = hypothetical seam and two = real seam, mechanisms duplicated from elsewhere in the repository, code that re-implements what a tool does natively.
+Context: domain glossary and ADRs in the touched area; do not re-litigate an ADR unless the friction is real, and mark such candidates.
+Deliver: per candidate the files, problem, solution, benefits (locality, leverage, tests), strength (Strong, Worth exploring, Speculative) and fit (fits this PR, follow-up issue, conflicts with an open PR), with evidence; a top recommendation; no interface proposals.
+```
+
+Spawn with `--base <PR head SHA>`, in parallel with the first internal review.
 
 ## Proof
 

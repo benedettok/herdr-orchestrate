@@ -82,11 +82,20 @@ Treat a settled worker as disposable once its durable report has been consumed a
 For most feature and product changes, prefer a **PR-first review loop** after the author has committed and run baseline checks:
 
 1. Push the integration branch and open a draft PR against the intended base.
-2. Spawn the required internal review against the PR head SHA.
+2. Spawn the required internal review against the PR head SHA. For a normal or complex change, spawn an **architecture review** in parallel with this first review, not after it (see below).
 3. Send accepted findings to the existing author and push fixes to the same PR.
 4. Re-run affected checks and live proof against the updated head.
-5. After the internal review is resolved, inspect repository review-bot feedback and send valid findings through the same fix loop.
+5. After the internal review is resolved, inspect repository review-bot feedback and send valid findings through the same fix loop. When you trigger a review bot, add the architecture lens to the request: module depth and seams, duplication of mechanisms that already exist elsewhere in the repository, and code that re-implements what a tool does natively.
 6. Mark the PR ready only when review findings, checks, and proof are resolved.
+
+### Architecture review: early, scoped to the diff
+
+A refactor that arrives after several review rounds invalidates every approval and restarts the loop. Look at the shape of the change once, right after the first author pass, while it is still cheap to change.
+
+- Spawn one read-only Opus worker on the PR head with the architecture brief from [`references/briefs.md`](references/briefs.md). If the target repository ships an `improve-codebase-architecture` skill (or its `LANGUAGE.md`), the worker follows its steps 1 and 2, scoped to the diff and the code the diff reuses or duplicates.
+- The worker classifies every candidate as **fits this PR**, **follow-up issue**, or **conflicts with another open PR**, and names the evidence (deletion test, number of adapters, duplicated code).
+- Send fit-now candidates the user or you accept to the author together with the first review's findings, in one fix pass. Propose follow-ups to the user as issues; do not widen the PR on your own.
+- Skip it for trivial changes. Always run it when the diff adds a module next to a similar one, imports internals from another area's package, or interprets a tool's configuration (selectors, schemas, manifests) in its own code.
 
 Keep parallel implementation commits traceable inside one integration PR when they deliver one coherent outcome. Use separate PRs when slices need independent rollout, reversion, ownership, or review. Skip the PR-first loop only when the user does not want a PR, the repository workflow forbids it, or the work is a local/non-delivery artifact.
 
@@ -99,5 +108,7 @@ This step is complete when the user-approved PR is merged, or when the user expl
 ## 5. Close the run
 
 Run cleanup preview first, verify it targets only this run's worker tabs/worktrees, then run cleanup apply. Use `orch cleanup --run <run-id> --worker <worker-id>` when disposing of one worker; omitting `--worker` retains whole-run cleanup. Cleanup closes worker tabs but keeps the project's board workspace available for the next run; it must preserve branches and durable prompts/reports. Report one concise table or list containing each worker's role, branch/SHA/PR, verdict, checks, proof, merge status, and any next action.
+
+After a complex run or the last wave of an epic, offer the user a full architecture pass over the area the run touched (the repository's `improve-codebase-architecture` skill, unscoped by diff). Offer it per area and wave, not per feature.
 
 The orchestration is complete only when every user requirement has report-backed evidence, required proof is live, merge state matches the user's decision, and disposable worker resources are cleaned up.
