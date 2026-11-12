@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { a as reconcileRun, c as startRun, d as isThinkingLevel, f as loadRun, n as doctor, o as sendWorker, r as latestRun, s as spawnWorker, t as board } from "./orch-CaZpeeSF.mjs";
+import { a as reconcileRun, c as startRun, f as isThinkingLevel, l as stopHook, n as doctor, o as sendWorker, p as loadRun, r as latestRun, s as spawnWorker, t as board } from "./orch-BfV_dEBL.mjs";
 import { existsSync } from "node:fs";
 //#region src/cli.ts
 function usage() {
@@ -60,6 +60,20 @@ async function main() {
 		console.log(`Started ${state.id}\n${state.goal}`);
 		return;
 	}
+	if (args[0] === "hook" && args[1] === "stop") {
+		const state = option(args, "--state");
+		const worker = option(args, "--worker");
+		if (!state || !worker) usage();
+		const answer = await stopHook({
+			statePath: state,
+			workerId: worker
+		}).catch((error) => {
+			console.error(`orch hook stop: ${error instanceof Error ? error.message : String(error)}`);
+			return null;
+		});
+		if (answer) console.log(answer);
+		return;
+	}
 	if (args[0] === "worker" && args[1] === "spawn") {
 		const id = args[2];
 		const route = option(args, "--route");
@@ -110,7 +124,7 @@ async function main() {
 		while (waiting) {
 			const state = await reconcileRun(initial.repoRoot, initial.id);
 			const active = Object.values(state.workers).filter((worker) => worker.status === "working" || worker.status === "launching");
-			const blocked = Object.values(state.workers).filter((worker) => worker.status === "blocked" || worker.status === "failed");
+			const blocked = Object.values(state.workers).filter((worker) => worker.status === "blocked" || worker.status === "failed" || worker.status === "idle");
 			if (blocked.length) {
 				const details = blocked.map((worker) => {
 					const fields = [`${worker.id}: status=${worker.status}`, `report=${worker.reportPath}`];
@@ -131,7 +145,7 @@ async function main() {
 		return;
 	}
 	if (args[0] === "cleanup") {
-		const { cleanupRun } = await import("./orch-CaZpeeSF.mjs").then((n) => n.i);
+		const { cleanupRun } = await import("./orch-BfV_dEBL.mjs").then((n) => n.i);
 		const selected = option(args, "--run");
 		const state = selected ? await loadRun((await latestRun(cwd)).repoRoot, selected) : await latestRun(cwd);
 		console.log((await cleanupRun({

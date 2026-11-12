@@ -7,7 +7,15 @@ export type Route = "default" | "fast" | "explore";
 export type TaskSize = "trivial" | "normal" | "complex";
 export const THINKING_LEVELS = ["low", "medium", "high", "xhigh"] as const;
 export type ThinkingLevel = (typeof THINKING_LEVELS)[number];
-export type WorkerStatus = "staged" | "launching" | "working" | "blocked" | "done" | "failed";
+/* `idle`: the agent ended its turn, but the current pass has no report with a final verdict. */
+export type WorkerStatus =
+  | "staged"
+  | "launching"
+  | "working"
+  | "blocked"
+  | "idle"
+  | "done"
+  | "failed";
 
 export interface ModelRoute {
   provider: string;

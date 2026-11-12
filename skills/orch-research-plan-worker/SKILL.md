@@ -9,6 +9,8 @@ compatibility: Requires Claude Code inside a herdr-orchestrate worker pane.
 
 The assigned brief is authoritative. It states the role, route, scope, constraints, and report path.
 
+orch reads the end of your turn as the end of the pass. Run every command in the foreground and do not end a turn to wait for one. A Stop hook refuses to end a turn while the pass has no report with a final verdict.
+
 ## 1. Establish the lane
 
 Read the brief and repository instructions before investigating.

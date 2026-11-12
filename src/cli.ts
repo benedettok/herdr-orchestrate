@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import {
   board,
   doctor,
+  stopHook,
   latestRun,
   reconcileRun,
   sendWorker,
@@ -79,6 +80,21 @@ async function main(): Promise<void> {
     console.log(`Started ${state.id}\n${state.goal}`);
     return;
   }
+  if (args[0] === "hook" && args[1] === "stop") {
+    /* Claude Code's Stop hook of a worker session, installed by `orch worker spawn`. */
+    const state = option(args, "--state");
+    const worker = option(args, "--worker");
+    if (!state || !worker) usage();
+    const answer = await stopHook({ statePath: state, workerId: worker }).catch(
+      (error: unknown) => {
+        /* A broken hook must never trap a worker: let the turn end. */
+        console.error(`orch hook stop: ${error instanceof Error ? error.message : String(error)}`);
+        return null;
+      },
+    );
+    if (answer) console.log(answer);
+    return;
+  }
   if (args[0] === "worker" && args[1] === "spawn") {
     const id = args[2];
     const route = option(args, "--route") as Route | undefined;
@@ -129,7 +145,8 @@ async function main(): Promise<void> {
         (worker) => worker.status === "working" || worker.status === "launching",
       );
       const blocked = Object.values(state.workers).filter(
-        (worker) => worker.status === "blocked" || worker.status === "failed",
+        (worker) =>
+          worker.status === "blocked" || worker.status === "failed" || worker.status === "idle",
       );
       if (blocked.length) {
         const details = blocked

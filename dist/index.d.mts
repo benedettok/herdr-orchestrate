@@ -3,7 +3,7 @@ type Route = "default" | "fast" | "explore";
 type TaskSize = "trivial" | "normal" | "complex";
 declare const THINKING_LEVELS: readonly ["low", "medium", "high", "xhigh"];
 type ThinkingLevel = (typeof THINKING_LEVELS)[number];
-type WorkerStatus = "staged" | "launching" | "working" | "blocked" | "done" | "failed";
+type WorkerStatus = "staged" | "launching" | "working" | "blocked" | "idle" | "done" | "failed";
 interface ModelRoute {
   provider: string;
   model: string;

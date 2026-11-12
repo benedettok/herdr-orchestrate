@@ -35,6 +35,10 @@ Use the real interface: browser for frontend behavior, actual CLI for terminal b
 
 This step is complete when every acceptance criterion is mapped to a concrete artifact, check, finding, or observed result; uncertainty is a blocker, not a pass.
 
+## Stay in your turn until the report exists
+
+orch reads the end of your turn as the end of the pass. Do not run commands in the background (`run_in_background`, `&`, Monitor) and do not end a turn to wait for a command, a bot review or CI: wait in the foreground, with a long Bash timeout and a polling loop inside one call. A Stop hook refuses to end a turn while the pass has no report with a final verdict, and says so.
+
 ## 3. Report
 
 Follow [`../references/worker-report.md`](../references/worker-report.md). Authors must include branch and commit SHA. Reviewers must include target/base and verdict. Proof workers must include the exact live path and observation.

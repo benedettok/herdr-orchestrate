@@ -59,6 +59,8 @@ Prefer a **fan-out/fan-in** gate over assigning one broad task to one worker. Be
 
 Immediately run `wait --run <id>` through the Bash tool with `run_in_background: true`. Never foreground the wait and never use shell `&`: the background tool is what wakes the god session when workers settle.
 
+`wait` also returns when a worker is `idle`: its agent ended a turn although the pass has no report with a final verdict (a Stop hook refuses that a few times first). Read the end of its session, then nudge it with `orch worker send`.
+
 If a report ends `orch-verdict: blocked scout evidence needed`, spawn the requested scouts, wait for their fact-only reports, then send the report paths back to the same worker.
 
 This step is complete when the board reports the worker settled and its durable report ends in `orch-verdict: done` or identifies a precise blocker.

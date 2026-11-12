@@ -1,5 +1,5 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { run } from "./shell.js";
 import {
@@ -9,6 +9,7 @@ import {
   projectRoot,
   runRoot,
   saveRun,
+  statePath,
   type ModelRoute,
   type Route,
   type RunState,
@@ -178,7 +179,8 @@ export async function spawnWorker(input: {
       typeof tabResult.result?.tab?.tab_id === "string" ? tabResult.result.tab.tab_id : null;
     if (typeof rootPaneId !== "string")
       throw new Error(`Herdr did not return a root pane for worker '${input.id}'.`);
-    const command = `cd ${JSON.stringify(worktreePath)} && exec claude --name ${JSON.stringify(agentName)} --model ${JSON.stringify(model.model)} --effort ${JSON.stringify(model.thinking)} --permission-mode auto --add-dir ${JSON.stringify(reportDirectory)} --allowedTools ${JSON.stringify(`Edit(/${reportDirectory}/**)`)}`;
+    const settingsPath = await writeWorkerSettings(state, worker.id);
+    const command = `cd ${JSON.stringify(worktreePath)} && exec claude --name ${JSON.stringify(agentName)} --model ${JSON.stringify(model.model)} --effort ${JSON.stringify(model.thinking)} --permission-mode auto --settings ${JSON.stringify(settingsPath)} --add-dir ${JSON.stringify(reportDirectory)} --allowedTools ${JSON.stringify(`Edit(/${reportDirectory}/**)`)}`;
     worker.paneId = rootPaneId;
     await run("herdr", ["pane", "run", rootPaneId, command]);
     await waitForAgent(rootPaneId, "idle", 30000);
@@ -193,6 +195,67 @@ export async function spawnWorker(input: {
     await saveRun(state);
     throw error;
   }
+}
+
+/* How often the Stop hook refuses to let a worker end one pass without a final report. A
+   worker that cannot write one stops after this many refusals and shows up as `idle`. */
+const STOP_HOOK_MAX_BLOCKS = 4;
+
+/* Claude Code settings for a worker session: a Stop hook that refuses to end a turn while the
+   current pass has no report with a final `orch-verdict`. Without it, a worker that starts a
+   background command and ends its turn to wait for it looks finished to orch, although Claude
+   Code would wake it again when the command completes. */
+async function writeWorkerSettings(state: RunState, workerId: string): Promise<string> {
+  const root = runRoot(state.repoRoot, state.id);
+  const settingsPath = join(root, "settings", `${workerId}.json`);
+  const cli = fileURLToPath(new URL("./cli.mjs", import.meta.url));
+  const hook = [
+    process.execPath,
+    cli,
+    "hook",
+    "stop",
+    "--state",
+    statePath(state.repoRoot, state.id),
+    "--worker",
+    workerId,
+  ]
+    .map((part) => JSON.stringify(part))
+    .join(" ");
+  const settings = { hooks: { Stop: [{ hooks: [{ type: "command", command: hook }] }] } };
+  await mkdir(dirname(settingsPath), { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+  return settingsPath;
+}
+
+/* The Stop hook of a worker session. Returns the hook's JSON answer, or null to let the turn end. */
+export async function stopHook(input: {
+  statePath: string;
+  workerId: string;
+}): Promise<string | null> {
+  const state = JSON.parse(await readFile(input.statePath, "utf8")) as RunState;
+  const worker = state.workers[input.workerId];
+  if (!worker) return null;
+  const report = await readFile(worker.reportPath, "utf8").catch(() => null);
+  if (report && finalReportVerdict(report)) return null;
+  const counter = join(
+    dirname(input.statePath),
+    "hooks",
+    `${worker.id}-${basename(worker.reportPath, ".md")}.blocks`,
+  );
+  const blocks = Number((await readFile(counter, "utf8").catch(() => "0")).trim()) || 0;
+  if (blocks >= STOP_HOOK_MAX_BLOCKS) return null;
+  await mkdir(dirname(counter), { recursive: true });
+  await writeFile(counter, String(blocks + 1));
+  return JSON.stringify({
+    decision: "block",
+    reason: [
+      `orch: this pass has no final report yet (${worker.reportPath} must end with \`orch-verdict: done\` or \`orch-verdict: blocked <reason>\`).`,
+      "Ending your turn ends the pass for the orchestrator, even if a background command would wake you later.",
+      "If you are waiting for a command, a bot review or CI: wait in the foreground now (a Bash call with a long timeout that polls in a loop), then continue the brief.",
+      "If the work is finished or blocked: write the full report now.",
+      `Refusal ${blocks + 1} of ${STOP_HOOK_MAX_BLOCKS}.`,
+    ].join(" "),
+  });
 }
 
 function modelForWorker(route: Route, thinking?: ThinkingLevel): ModelRoute {
@@ -374,7 +437,10 @@ export async function reconcileRun(repoRoot: string, runId: string): Promise<Run
         worker.tabId = pane.tab_id;
         if (pane.agent_status === "blocked") worker.status = "blocked";
         else if (pane.agent_status === "working") worker.status = "working";
-        else if (pane.agent_status === "done") worker.status = "done";
+        /* An agent that ended its turn without a final report has not finished its pass. */ else if (
+          pane.agent_status === "done"
+        )
+          worker.status = "idle";
       }
     }
     worker.updatedAt = new Date().toISOString();
@@ -477,7 +543,7 @@ export function board(state: RunState): string {
   lines.push(
     "",
     "## Next action",
-    `- ${workers.some((worker) => worker.status === "blocked") ? "Unblock a worker with orch worker send." : "Inspect reports, then create the next worker through orch."}`,
+    `- ${workers.some((worker) => worker.status === "blocked") ? "Unblock a worker with orch worker send." : workers.some((worker) => worker.status === "idle") ? "A worker went idle without a final report: read its session, then nudge it with orch worker send." : "Inspect reports, then create the next worker through orch."}`,
   );
   return `${lines.join("\n")}\n`;
 }
